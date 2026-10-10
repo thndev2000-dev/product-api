@@ -1,4 +1,3 @@
-# ProductApi
 
 API quản lý sản phẩm (CRUD) bằng ASP.NET Core — project lab để học trọn vòng đời
 hệ thống thực tế: code → test → GitHub → Azure SQL → CI/CD.
@@ -15,3 +14,10 @@ hệ thống thực tế: code → test → GitHub → Azure SQL → CI/CD.
 cd src/ProductApi
 dotnet run
     
+## Roadmap
+
+- [x] CRUD API + EF Core + Swagger
+- [x] Validation + xUnit tests
+- [ ] Deploy lên Azure (App Service + Azure SQL)
+- [ ] CI/CD bằng GitHub Actions
+- [ ] Application Insights + health check
