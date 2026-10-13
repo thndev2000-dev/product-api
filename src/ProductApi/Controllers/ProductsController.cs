@@ -32,7 +32,6 @@ public class ProductsController : ControllerBase
 	[HttpPost]
 	public async Task<ActionResult<Product>> Create(Product product)
 	{
-		string broken = 123;
 		_logger.LogInformation("Creating product {ProductName} with price {Price}", product.Name, product.Price);
 		_context.Products.Add(product);
 		await _context.SaveChangesAsync();
