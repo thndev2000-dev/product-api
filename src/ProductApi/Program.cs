@@ -2,6 +2,15 @@ using Microsoft.EntityFrameworkCore;
 using ProductApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? [];
+
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("AppCors", policy =>
+		policy.WithOrigins(corsOrigins)
+			  .AllowAnyHeader()
+			  .AllowAnyMethod());
+});
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -22,7 +31,10 @@ if (app.Environment.IsDevelopment())
 
 //app.UseHttpsRedirection();
 app.UseAuthorization();
+
+app.UseCors("AppCors");
+
 app.MapControllers();
-app.MapGet("/health", () => Results.Ok("Healthy"));
+app.MapGet("/health", () => Results.Ok("Healthy"));	
 app.Run();
 public partial class Program { }
