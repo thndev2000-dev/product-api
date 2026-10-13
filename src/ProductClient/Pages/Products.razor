@@ -1,0 +1,118 @@
+﻿@page "/products"
+@using ProductClient.Models
+@inject HttpClient Http
+
+<PageTitle>Products</PageTitle>
+
+<h1>Products</h1>
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+@if (products == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr><th>Id</th><th>Name</th><th>Price</th><th>Description</th><th style="width:160px"></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var p in products)
+            {
+                <tr>
+                    <td>@p.Id</td>
+                    <td>@p.Name</td>
+                    <td>@p.Price</td>
+                    <td>@p.Description</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1" @onclick="() => Edit(p)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => Delete(p.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<h3 class="mt-4">@(editingId == 0 ? "Add product" : $"Edit product #{editingId}")</h3>
+
+<EditForm Model="form" OnValidSubmit="Save">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="mb-2">
+        <label class="form-label">Name</label>
+        <InputText class="form-control" @bind-Value="form.Name" />
+    </div>
+    <div class="mb-2">
+        <label class="form-label">Price</label>
+        <InputNumber class="form-control" @bind-Value="form.Price" />
+    </div>
+    <div class="mb-2">
+        <label class="form-label">Description</label>
+        <InputText class="form-control" @bind-Value="form.Description" />
+    </div>
+    <button type="submit" class="btn btn-success me-1">Save</button>
+    @if (editingId != 0)
+    {
+        <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+    }
+</EditForm>
+
+@code {
+    private List<Product>? products;
+    private Product form = new();
+    private int editingId;
+    private string? error;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        try
+        {
+            error = null;
+            products = await Http.GetFromJsonAsync<List<Product>>("api/products");
+        }
+        catch (Exception ex) { error = $"Load failed: {ex.Message}"; }
+    }
+
+    private void Edit(Product p)
+    {
+        editingId = p.Id;
+        form = new Product { Id = p.Id, Name = p.Name, Price = p.Price, Description = p.Description };
+    }
+
+    private void Cancel() { editingId = 0; form = new(); }
+
+    private async Task Save()
+    {
+        try
+        {
+            error = null;
+            var resp = editingId == 0
+                ? await Http.PostAsJsonAsync("api/products", form)
+                : await Http.PutAsJsonAsync($"api/products/{editingId}", form);
+            if (!resp.IsSuccessStatusCode) { error = $"Save failed: {(int)resp.StatusCode}"; return; }
+            Cancel();
+            await Load();
+        }
+        catch (Exception ex) { error = $"Save failed: {ex.Message}"; }
+    }
+
+    private async Task Delete(int id)
+    {
+        try
+        {
+            error = null;
+            var resp = await Http.DeleteAsync($"api/products/{id}");
+            if (!resp.IsSuccessStatusCode) { error = $"Delete failed: {(int)resp.StatusCode}"; return; }
+            await Load();
+        }
+        catch (Exception ex) { error = $"Delete failed: {ex.Message}"; }
+    }
+}
