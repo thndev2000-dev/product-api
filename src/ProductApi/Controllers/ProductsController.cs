@@ -9,25 +9,32 @@ namespace ProductApi.Controllers;
 [Route("api/[controller]")]
 public class ProductsController : ControllerBase
 {
-	private readonly AppDbContext _db;
-	public ProductsController(AppDbContext db) => _db = db;
+	private readonly AppDbContext _context;
+	private readonly ILogger<ProductsController> _logger;
+
+	public ProductsController(AppDbContext context, ILogger<ProductsController> logger)
+	{
+		_context = context;
+		_logger = logger;
+	}
 
 	[HttpGet]
 	public async Task<ActionResult<IEnumerable<Product>>> GetAll()
-		=> Ok(await _db.Products.ToListAsync());
+		=> Ok(await _context.Products.ToListAsync());
 
 	[HttpGet("{id:int}")]
 	public async Task<ActionResult<Product>> GetById(int id)
 	{
-		var p = await _db.Products.FindAsync(id);
+		var p = await _context.Products.FindAsync(id);
 		return p is null ? NotFound() : Ok(p);
 	}
 
 	[HttpPost]
 	public async Task<ActionResult<Product>> Create(Product product)
 	{
-		_db.Products.Add(product);
-		await _db.SaveChangesAsync();
+		_logger.LogInformation("Creating product {ProductName} with price {Price}", product.Name, product.Price);
+		_context.Products.Add(product);
+		await _context.SaveChangesAsync();
 		return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
 	}
 
@@ -35,11 +42,11 @@ public class ProductsController : ControllerBase
 	public async Task<IActionResult> Update(int id, Product product)
 	{
 		if (id != product.Id) return BadRequest();
-		_db.Entry(product).State = EntityState.Modified;
-		try { await _db.SaveChangesAsync(); }
+		_context.Entry(product).State = EntityState.Modified;
+		try { await _context.SaveChangesAsync(); }
 		catch (DbUpdateConcurrencyException)
 		{
-			if (!await _db.Products.AnyAsync(p => p.Id == id)) return NotFound();
+			if (!await _context.Products.AnyAsync(p => p.Id == id)) return NotFound();
 			throw;
 		}
 		return NoContent();
@@ -48,10 +55,10 @@ public class ProductsController : ControllerBase
 	[HttpDelete("{id:int}")]
 	public async Task<IActionResult> Delete(int id)
 	{
-		var p = await _db.Products.FindAsync(id);
+		var p = await _context.Products.FindAsync(id);
 		if (p is null) return NotFound();
-		_db.Products.Remove(p);
-		await _db.SaveChangesAsync();
+		_context.Products.Remove(p);
+		await _context.SaveChangesAsync();
 		return NoContent();
 	}
 }
