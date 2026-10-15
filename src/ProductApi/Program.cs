@@ -22,6 +22,15 @@ if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_
     builder.Services.AddApplicationInsightsTelemetry();
 }
 
+if (!string.IsNullOrEmpty(builder.Configuration["Redis:ConnectionString"]))
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = builder.Configuration["Redis:ConnectionString"];
+    });
+else
+    builder.Services.AddDistributedMemoryCache(); // fallback: cache trong RAM khi không có Redis
+
+
 builder.Services.AddDbContext<AppDbContext>(options =>
 	options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
